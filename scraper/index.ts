@@ -1,11 +1,11 @@
 import puppeteer from "puppeteer";
 
-export async function scrapeProducts () {
+export async function scrapeProducts ( url : string ) {
     const browser = await puppeteer.launch({ headless: true });
     const page = await browser.newPage();
 
     try {
-        await page.goto('https://portfolio-psi-orcin-14.vercel.app/', {
+        await page.goto(url, {
         });
 
         const grabTitle = await page.evaluate(() => {

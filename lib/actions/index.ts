@@ -1,42 +1,34 @@
-'use server'
+"use server";
 
-import { revalidatePath } from "next/cache";
-import { connectToDB } from "../mongoose";
 import { Product } from "../models/product.model";
+// import { revalidatePath } from "next/cache";
+import { connectToDB } from "../mongoose";
+// import { Product } from "../models/product.model";
 import { scrapeProducts } from "@/scraper";
 
-export async function scrapeAndStoreProduct(productUrl : string){
-    if(!productUrl) return;
+export async function scrapeAndStoreProduct(productUrl: string) {
+  if (!productUrl) return;
 
-    try {
-        connectToDB();
+  try {
+    connectToDB();
 
-        const scrapedProduct = scrapeProducts(productUrl)
+    const scrapedProduct = await scrapeProducts(productUrl);
 
-        if(!scrapedProduct) return;
+    if (!scrapedProduct) return;
+    
+    const newProduct = new Product({
+        url: productUrl,
+        currency: scrapedProduct.pgPriceSymbol,
+        image: scrapedProduct.imageProduct,
+        title: scrapedProduct.pgTitle,
+        currentPrice: scrapedProduct.pgProductPrice,
+        originalPrice: scrapedProduct.pgOriginalPrice,
+    });
 
-        let product = scrapedProduct;
+    // await newProduct.save();
 
-        const existingProduct = await Product.findOne({ url: scrapedProduct.url })
-
-        if( existingProduct ){
-            const updatedPriceHistory : any = [
-                ...existingProduct.priceHistory,
-                { price: scrapedProduct.currentPrice }
-            ]
-            product = {
-                ...scrapedProduct,
-                priceHistory: updatedPriceHistory,
-                lowestPrice: updatedPriceHistory,
-                highestPrice: updatedPriceHistory,
-                averagePrice: updatedPriceHistory,
-            }
-        }
-
-        const newProduct = await Product.findOneAndUpdate( {url: scrapedProduct.url}, product, { upsert: true, new: true })
-        revalidatePath(`/products/${newProduct._id}`)
-    } catch (error) {
-        throw new Error(`Failed to create/update product: ${error.message}`)
-    }
+    return [newProduct];
+  } catch (error) {
+    throw new Error(`Failed to create/update product: ${error}`);
+  }
 }
-

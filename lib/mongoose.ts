@@ -9,9 +9,8 @@ export const connectToDB = async () => {
         console.log((`MongoDB Conectado en : ${url}`));
         
     } catch (error) {
-        console.log(('Error al conectar a MongoDB'));
+        console.log('Error al conectar a MongoDB', error);
         exit(1);
     }
 
-    
 }
